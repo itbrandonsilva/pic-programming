@@ -45,7 +45,7 @@ CONFIG_PORTS
     return
 
 CONFIG_LCD
-    bsf PORTA,RA0
+    bsf PORTA,RA0    ; Initialize high on LCD clock input.
     movlw b'00110000'    ; Ensure we are using the 8bit interface
     call LCD_INS
     movlw b'00001100'    ; Turns on the display
