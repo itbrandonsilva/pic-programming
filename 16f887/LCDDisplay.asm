@@ -4,6 +4,9 @@
 #include <p16F887.inc>
 
     __config _CONFIG1, _LVP_OFF & _MCLRE_OFF & _PWRTE_ON & _INTOSCIO
+	; Set CONFIG2 defaults to squelch programmer warning
+    __config _CONFIG2, _WRT_OFF & _BOR40V
+    
 
     cblock 0x20
         REPEAT
@@ -11,7 +14,7 @@
         STARTED
     endC
 
-    org 0x00
+    ;org 0x00
     call CONFIG_PORTS
     call CONFIG_LCD
     call DISPLAY_OFF
@@ -22,11 +25,10 @@ MAIN
 
 CONFIG_PORTS
     banksel TRISA
+    clrf TRISA
     movlw B'11111111'
     movwf TRISB
-    clrf TRISA
     clrf TRISC
-    clrf TRISD
 
     ; Enables pull-up resistors allowing PORTB bits to be toggled with switches.
     banksel OPTION_REG
