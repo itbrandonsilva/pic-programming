@@ -42,12 +42,10 @@ CONFIG_PORTS
     clrf ANSELH
 
     banksel PORTA
-    bsf PORTA,0
-    bcf PORTA,1
-    bcf PORTA,2
     return
 
 CONFIG_LCD
+    bsf PORTA,RA0
     movlw b'00110000'    ; Ensure we are using the 8bit interface
     call LCD_INS
     movlw b'00001100'    ; Turns on the display
