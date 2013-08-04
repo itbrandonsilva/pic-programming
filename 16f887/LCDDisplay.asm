@@ -142,9 +142,20 @@ TOGGLE
     bsf PORTA,RA0
     return
 
-; PIC is operating at 4mhz, therefore this delays for approximately/a little more than 1ms
-; 4mhz = 4000 clock cycles per ms
-; 50 calls per loop * 80 loops  = 4000 clock cycles
+; Tcy = Time it takes to complete one clock cycle.
+; We are using a 4Mhz internal oscillator.
+; Tcy = [1,000,000us/4,000,000hz]*4 = 1us
+; 50 calls per loop * 80 loops = 
+; approximately 4000 clock cycles (including
+; decfsz and other operations).
+; Tcy(1us) * 4000 clock cycles = 4000us = 4ms.
+; This delay function delays for approximately 4ms.
+; There isn't a specific reason for using a 4ms
+; delay when toggling RA0 besides giving the LCD
+; plenty of time to complete it's operations. 
+; If you want to provide a more precise clock source 
+; to the LCD, consult the relevant datasheets.
+
 DELAY
     movlw b'00001111' ; 50 decrements
     movwf REPEAT
