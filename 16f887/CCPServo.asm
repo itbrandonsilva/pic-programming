@@ -13,8 +13,8 @@
         LOWL
     endc
 
-	; org 0x0000 labels where the PIC should
-	; begin executing as soon as it's able
+    ; org 0x0000 labels where the PIC should
+    ; begin executing as soon as it's able
     ; to begin processing; this is where the
     ; the program begins after a reset.
     org 0x0000
