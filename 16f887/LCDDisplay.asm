@@ -4,7 +4,7 @@
 #include <p16F887.inc>
 
     __config _CONFIG1, _LVP_OFF & _MCLRE_OFF & _PWRTE_ON & _INTOSCIO
-	; Set CONFIG2 defaults to squelch programmer warning
+    ; Set CONFIG2 defaults to squelch programmer warning
     __config _CONFIG2, _WRT_OFF & _BOR40V
     
 
@@ -12,9 +12,8 @@
         REPEAT
         DELAYCOUNT
         STARTED
-    endC
+    endc
 
-    ;org 0x00
     call CONFIG_PORTS
     call CONFIG_LCD
     call DISPLAY_OFF
@@ -145,28 +144,28 @@ TOGGLE
 ; Tcy = Time it takes to complete one clock cycle.
 ; We are using a 4Mhz internal oscillator.
 ; Tcy = [1,000,000us/4,000,000hz]*4 = 1us
-; 50 calls per loop * 80 loops = 
-; approximately 4000 clock cycles (including
-; decfsz and other operations).
-; Tcy(1us) * 4000 clock cycles = 4000us = 4ms.
-; This delay function delays for approximately 4ms.
-; There isn't a specific reason for using a 4ms
-; delay when toggling RA0 besides giving the LCD
-; plenty of time to complete it's operations. 
-; If you want to provide a more precise clock source 
-; to the LCD, consult the relevant datasheets.
 
-DELAY
-    movlw b'00001111' ; 50 decrements
-    movwf REPEAT
-REPEAT_LOOP       
-    movlw b'00110010' ; 80 repeats
+DELAY     
+    ; 200 loops
+    movlw b'11001000'
     movwf DELAYCOUNT
-LOOP  
-    decfsz DELAYCOUNT 
-    goto LOOP        
-    decfsz REPEAT
-    goto REPEAT_LOOP
+LOOP
+    ; decsfz, for the vast majority of the time, will cost 1 clock cycle.
+    nop                  ; (200 loops * 2 nops (2 cycles) = 400 total cycles)              
+    nop                  
+    decfsz DELAYCOUNT    ; (200 loops * 1 decfsz (1 cycle) = 200 total cycles)
+    goto LOOP            ; (200 loops * 1 goto (2 cycles) = 400 total cycles)
+
+    ; Total clock cycles = approximately 1000.
+    ; Tcy(1us) * 1000 cycles = 1000us = 1ms;
+    ; This delay function will delay for approximately 1ms.
+
+    ; There isn't a specific reason for using a 1ms
+    ; delay when toggling RA0 besides giving the LCD
+    ; plenty of time to complete it's operations. 
+    ; If you want to provide a more precise clock source 
+    ; to the LCD, consult the relevant datasheets.
+
     return
 
 end
