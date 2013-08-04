@@ -13,6 +13,35 @@
         LOWL
     endc
 
+	; org 0x0000 labels where the PIC should
+	; begin executing as soon as it's able
+    ; to begin processing; this is where the
+    ; the program begins after a reset.
+    org 0x0000
+    goto INIT
+
+
+    ; CCP1IF is set when CCPR1 is equal to TMR1.
+    ; When CCP1IF is set, TMR1 is reset back to 0,
+    ; as configured in CCP1CON.
+    ; CCPR1 is toggled between (HIGHH/HIGHL) and
+    ; (LOWH/LOWL) each time the SERVO routine 
+    ; is called to update the pulse width timing. 
+    ; The SERVO routine will clear CCP1IF so we 
+    ; can listen for the next interrupt.
+
+    ; org 0x0004 labels where the PIC should
+    ; begin handling an interrupt. RETFIE signals
+    ; to the PIC that the interrupt has been handled
+    ; and can continue processing where it was 
+    ; interrupted.
+    org 0x0004
+    ; "Interrupt service routine"
+    btfsc PIR1,CCP1IF
+    call SERVO
+    retfie
+
+INIT:
     ; Analog output is not needed for this application.
     banksel ANSEL
     clrf ANSEL
@@ -50,8 +79,7 @@
     bsf PIE1,CCP1IE
 
     banksel INTCON
-    ; Uncommenting this line results in a stack overflow. Don't know why yet.
-    ; bsf INTCON,GIE
+    bsf INTCON,GIE
     bsf INTCON,PEIE
 
     ; Initialize CCPR1 to trigger the first interrupt.
@@ -62,7 +90,9 @@
     movlw b'00000001'
     movwf T1CON
 
-MAIN
+    goto MAIN
+
+MAIN:
     btfss PORTB,RA0
     call SLEFT
     btfss PORTB,RA1
@@ -70,17 +100,6 @@ MAIN
     btfss PORTB,RA2
     call SRIGHT
 
-    ; CCP1IF is set when CCPR1 is equal to TMR1.
-    ; When CCP1IF is set, TMR1 is reset back to 0,
-    ; as configured in CCP1CON.
-    ; CCPR1 is toggled between (HIGHH/HIGHL) and
-    ; (LOWH/LOWL) each time SERVO is called
-    ; to update the pulse width timing. SERVO
-    ; will clear CCP1IF so we can listen for the
-    ; the next interrupt.
-
-    btfsc PIR1,CCP1IF
-    call SERVO
     goto MAIN
 
 
@@ -108,7 +127,7 @@ MAIN
 ; High 0x0960 (2400us)
 ; Low  0x44C0 (17600us)
 
-SLEFT
+SLEFT:
     movlw 0x02
     movwf HIGHH
     movlw 0x58
@@ -120,7 +139,7 @@ SLEFT
     movwf LOWL
     return
 
-SNEUT
+SNEUT:
     movlw 0x05
     movwf HIGHH
     movlw 0xDC
@@ -132,7 +151,7 @@ SNEUT
     movwf LOWL
     return
 
-SRIGHT
+SRIGHT:
     movlw 0x09
     movwf HIGHH
     movlw 0x60
@@ -144,21 +163,21 @@ SRIGHT
     movwf LOWL
     return
 
-SERVOHIGH
+SERVOHIGH:
     movf HIGHH,0
     movwf CCPR1H
     movf HIGHL,0
     movwf CCPR1L
     return
 
-SERVOLOW
+SERVOLOW:
     movf LOWH,0
     movwf CCPR1H
     movf LOWL,0
     movwf CCPR1L
     return
 
-SERVO
+SERVO:
     movlw B'00100000'    ; Toggle RA5 output bit.
     xorwf PORTA,1
 
@@ -168,6 +187,6 @@ SERVO
     call SERVOLOW
 
     bcf PIR1,CCP1IF    ; Clear the interrupt bit so we can be ready for the next interrupt.
-    return
+    retfie
 
     end
